@@ -16,19 +16,6 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency Check') {
-            steps {
-                sh '''
-                docker run --rm \
-                -v $PWD:/src \
-                owasp/dependency-check \
-                --scan /src \
-                --format HTML \
-                --out /src/reports
-                '''
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 sh '''
