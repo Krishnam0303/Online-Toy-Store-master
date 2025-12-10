@@ -11,18 +11,16 @@ pipeline {
     stage('Checkout') {
       steps { checkout scm }
     }
-    stage('Build') {
-      steps {
-        script {
-          if (fileExists('package.json')) {
-            sh 'npm --version || true'
-            sh 'npm install || true'
-          }
-          // build docker image
-          sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-        }
+  stage('Build') {
+  steps {
+    script {
+      if (fileExists('pom.xml')) {
+        sh 'mvn -B -DskipTests package'
       }
+      sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
     }
+  }
+}
     stage('Save & Transfer') {
       steps {
         // save image to tar
