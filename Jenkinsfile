@@ -1,47 +1,47 @@
 pipeline {
   agent any
+
   environment {
-    APP_HOST = "ubuntu@98.93.96.181"
-    SSH_CRED_ID = "ec2-app-ssh"
-    IMAGE_NAME = "online-toy-store"
-    IMAGE_TAG = "build-${env.BUILD_ID}"
-    TAR_FILE = "image-${env.BUILD_ID}.tar"
+    APP_HOST     = "ubuntu@98.93.96.181"
+    SSH_CRED_ID  = "ec2-app-ssh"
+    IMAGE_NAME   = "online-toy-store"
+    IMAGE_TAG    = "build-${env.BUILD_ID}"
+    TAR_FILE     = "image-${env.BUILD_ID}.tar"
   }
 
   stages {
 
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        checkout scm
+      }
     }
 
- stage('Build') {
-  steps {
-    script {
-      sh 'mvn clean package -DskipTests'
-      sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+    stage('Build Docker Image') {
+      steps {
+        sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+      }
     }
-  }
-}
 
-
-    stage('Save & Transfer') {
+    stage('Save & Transfer Image') {
       steps {
         sh "docker save ${IMAGE_NAME}:${IMAGE_TAG} -o ${TAR_FILE}"
-        sshagent (credentials: [SSH_CRED_ID]) {
+
+        sshagent([SSH_CRED_ID]) {
           sh "scp -o StrictHostKeyChecking=no ${TAR_FILE} ${APP_HOST}:~/"
         }
       }
     }
 
-    stage('Deploy on App Host') {
+    stage('Deploy Container') {
       steps {
-        sshagent (credentials: [SSH_CRED_ID]) {
+        sshagent([SSH_CRED_ID]) {
           sh """
             ssh -o StrictHostKeyChecking=no ${APP_HOST} '
-              docker load -i ~/${TAR_FILE} || exit 1 &&
+              docker load -i ~/${TAR_FILE} &&
               docker stop toy-app || true &&
               docker rm toy-app || true &&
-              docker run -d --name toy-app -p 80:8080 ${IMAGE_NAME}:${IMAGE_TAG}
+              docker run -d --name toy-app -p 80:3000 ${IMAGE_NAME}:${IMAGE_TAG}
             '
           """
         }
