@@ -10,4 +10,3 @@ WORKDIR /app
 COPY --from=build /app . 
 EXPOSE 3000
 CMD ["npm","start"]
-#for nodejs
