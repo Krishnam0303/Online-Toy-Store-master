@@ -14,16 +14,15 @@ pipeline {
       steps { checkout scm }
     }
 
-    stage('Build') {
-      steps {
-        script {
-          if (fileExists('pom.xml')) {
-            sh 'mvn -B -DskipTests package'
-          }
-          sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-        }
-      }
+ stage('Build') {
+  steps {
+    script {
+      sh 'mvn clean package -DskipTests'
+      sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
     }
+  }
+}
+
 
     stage('Save & Transfer') {
       steps {
